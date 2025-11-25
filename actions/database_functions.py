@@ -21,7 +21,7 @@ def database_insert(data):
     print("\nInsertion des données dans la base.")
     try:
         # on lit les données dans le fichier Excel
-        excel_extractor.read_excel_file_V0(data, "data/LesJO.xlsx")
+        excel_extractor.read_excel_file(data, "data/LesJO.xlsx")
     except Exception as e:
         # En cas d'erreur, on affiche un message
         print("L'erreur suivante s'est produite lors de l'insertion des données : " + repr(e) + ".", file=sys.stderr)
