@@ -37,7 +37,7 @@ CREATE TABLE LesEquipes
 (
     numEq NUMBER(3),
   CONSTRAINT EQ_PK PRIMARY KEY (numEq),
-  CONSTRAINT EP_CK3 CHECK (numEq > 0 AND numEq <=100)
+  CONSTRAINT EQ_CK1 CHECK (numEq > 0 AND numEq <=100)
 );
 
 CREATE TABLE SportifAppartientEquipe

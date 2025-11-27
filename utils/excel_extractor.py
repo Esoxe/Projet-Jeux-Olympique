@@ -42,15 +42,62 @@ def read_excel_file(data:sqlite3.Connection, file):
         cursor = data.cursor()
     
     #On construit la requete pour la table LesDisciplines avec LesEpreuves lu precedemment
-    disicipline_unique = []
     for ix, row in df_epreuves.iterrows():
         try:
-            for discipline in row['nomDi'] :
-                if discipline not in disicipline_unique:
-                    disicipline_unique.append(discipline)
-            query = "insert into LesDisciplines values ('{}')".format(disicipline_unique)
+            query = "insert into LesDisciplines values ('{}')".format(row['nomDi'])
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             print(query)
             cursor.execute(query)
         except IntegrityError as err:
             print(f"{err} : \n{row}")
+
+
+    # Lecture de l'onglet LesInscriptions du fichier excel, en interprétant toutes les colonnes comme des string
+    # pour construire uniformement la requête
+    df_inscriptions = pandas.read_excel(file, sheet_name='LesInscriptions', dtype=str)
+    df_inscriptions = df_inscriptions.where(pandas.notnull(df_inscriptions), 'null')
+
+    cursor = data.cursor()
+    for ix, row in df_inscriptions.iterrows():
+        try:
+            query = "insert into LesEquipes values ({})".format(row['numIn'])
+            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
+            print(query)
+            cursor.execute(query)
+        except IntegrityError as err:
+            print(f"{err} : \n{row}")
+
+    #Construction a l'aide des lectures précédante de table SportifAppartientEquipe qui est
+    #relation entre Sportif et numEq
+    cursor = data.cursor()
+    for ix, row in df_sportifs.iterrows():
+        try:
+            if row['numEq'] != 'null' :
+                query = "insert into SportifAppartientEquipe values ('{}','{}',{})".format(
+                    row['nomSp'], row['prenomSp'], row['numEq'])
+                # On affiche la requête pour comprendre la construction. A enlever une fois compris.
+                print(query)
+                cursor.execute(query)
+        except IntegrityError as err:
+            print(err)
+    # Lecture de l'onglet LesResultats du fichier excel, en interprétant toutes les colonnes comme des string
+    # pour construire uniformement la requête
+    df_resultats = pandas.read_excel(file, sheet_name='LesResultats', dtype=str)
+    df_resultats = df_inscriptions.where(pandas.notnull(df_resultats), 'null')
+    #On cree un dictionnaire indexe par le numEp
+    dico_medailles=df_resultats.set_index('numEp').to_dict('index')
+    dico_medailles=df_resultats.set_index('numEp').to_dict('index')
+    cursor = data.cursor()
+    for ix, row in df_inscriptions.iterrows():
+        try:
+            numero_epreuve = row['numEp']
+            medailles=dico_medailles.get(numero_epreuve)
+            numero_inscription = row['numIn']
+            nom_prenom
+            query = "insert into ParticipeIndividuel values ({},'{}','{}',)".format(
+                row['nomSp'], row['prenomSp'], row['numEq'])
+            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
+            print(query)
+            cursor.execute(query)
+        except IntegrityError as err:
+            print(err)
