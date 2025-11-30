@@ -1,2 +1,7 @@
-DROP TABLE IF EXISTS V0_LesEpreuves;
-DROP TABLE IF EXISTS V0_LesSportifsEQ;
+DROP TABLE IF EXISTS SportifAppartientEquipe;
+DROP TABLE IF EXISTS ParticipeEquipe;
+DROP TABLE IF EXISTS ParticipeIndividuel;
+DROP TABLE IF EXISTS LesDisciplines;
+DROP TABLE IF EXISTS LesEquipes;
+DROP TABLE IF EXISTS LesEpreuves;
+DROP TABLE IF EXISTS LesSportifs;

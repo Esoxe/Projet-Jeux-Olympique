@@ -46,7 +46,7 @@ def read_excel_file(data:sqlite3.Connection, file):
         try:
             query = "insert into LesDisciplines values ('{}')".format(row['nomDi'])
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-            print(query)
+            #print(query)
             cursor.execute(query)
         except IntegrityError as err:
             print(f"{err} : \n{row}")
@@ -60,10 +60,11 @@ def read_excel_file(data:sqlite3.Connection, file):
     cursor = data.cursor()
     for ix, row in df_inscriptions.iterrows():
         try:
-            query = "insert into LesEquipes values ({})".format(row['numIn'])
-            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-            print(query)
-            cursor.execute(query)
+            if int(row['numIn']) <=100 :
+                query = "insert into LesEquipes values ({})".format(row['numIn'])
+                # On affiche la requête pour comprendre la construction. A enlever une fois compris.
+                print(query)
+                cursor.execute(query)
         except IntegrityError as err:
             print(f"{err} : \n{row}")
 
@@ -73,8 +74,8 @@ def read_excel_file(data:sqlite3.Connection, file):
     for ix, row in df_sportifs.iterrows():
         try:
             if row['numEq'] != 'null' :
-                query = "insert into SportifAppartientEquipe values ('{}','{}',{})".format(
-                    row['nomSp'], row['prenomSp'], row['numEq'])
+                query = "insert into SportifAppartientEquipe values ({},{})".format(
+                    row['numSp'], row['numEq'])
                 # On affiche la requête pour comprendre la construction. A enlever une fois compris.
                 print(query)
                 cursor.execute(query)
@@ -82,22 +83,69 @@ def read_excel_file(data:sqlite3.Connection, file):
             print(err)
     # Lecture de l'onglet LesResultats du fichier excel, en interprétant toutes les colonnes comme des string
     # pour construire uniformement la requête
+    #Requete permettant de construire participe indivuel qui comprend les numSp les epreuves ou ils sont inscrit 
+    # et si ils ont obtenu une médaille dans cette épreuve
     df_resultats = pandas.read_excel(file, sheet_name='LesResultats', dtype=str)
-    df_resultats = df_inscriptions.where(pandas.notnull(df_resultats), 'null')
-    #On cree un dictionnaire indexe par le numEp
-    dico_medailles=df_resultats.set_index('numEp').to_dict('index')
+    df_resultats = df_resultats.where(pandas.notnull(df_resultats), 'null')     
     dico_medailles=df_resultats.set_index('numEp').to_dict('index')
     cursor = data.cursor()
+    medaille_gagner = ''
     for ix, row in df_inscriptions.iterrows():
         try:
-            numero_epreuve = row['numEp']
-            medailles=dico_medailles.get(numero_epreuve)
-            numero_inscription = row['numIn']
-            nom_prenom
-            query = "insert into ParticipeIndividuel values ({},'{}','{}',)".format(
-                row['nomSp'], row['prenomSp'], row['numEq'])
-            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-            print(query)
-            cursor.execute(query)
+            numero_epreuve=row['numEp']
+            numero_inscription=row['numIn']
+            if int(numero_inscription) > 100 :
+                medailles=dico_medailles.get(numero_epreuve)
+                if medailles :
+                    if medailles['gold'] == numero_inscription :
+                        medaille_gagner= 'or'
+                    elif medailles['silver'] == numero_inscription :
+                        medaille_gagner ='argent'
+                    elif medailles['bronze'] ==numero_inscription :
+                        medaille_gagner = 'bronze'
+                    else :
+                        medaille_gagner ='null'
+                else :
+                    medaille_gagner ='null'
+                if medaille_gagner != 'null' :
+                    query = "insert into ParticipeIndividuel values ({},{},'{}')".format(
+                numero_epreuve,numero_inscription, medaille_gagner)
+                else :
+                    query = "insert into ParticipeIndividuel values ({},{},null)".format(
+                    numero_epreuve,numero_inscription)
+                print(query)
+                cursor.execute(query)
+        except IntegrityError as err:
+            print(err)
+
+    #Requete permettant de construire participe indivuel qui comprend les numSp les epreuves ou ils sont inscrit 
+    # et si ils ont obtenu une médaille dans cette épreuve
+    cursor = data.cursor()
+    medaille_gagner = ''
+    for ix, row in df_inscriptions.iterrows():
+        try:
+            numero_epreuve=row['numEp']
+            numero_inscription=row['numIn']
+            if int(numero_inscription) <=100 :
+                medailles=dico_medailles.get(numero_epreuve)
+                if medailles :
+                    if medailles['gold'] == numero_inscription :
+                        medaille_gagner= 'or'
+                    elif medailles['silver'] == numero_inscription :
+                        medaille_gagner ='argent'
+                    elif medailles['bronze'] ==numero_inscription :
+                        medaille_gagner = 'bronze'
+                    else :
+                        medaille_gagner ='null'
+                else :
+                    medaille_gagner ='null'
+                if medaille_gagner != 'null' :
+                    query = "insert into ParticipeEquipe values ({},{},'{}')".format(
+                numero_epreuve,numero_inscription, medaille_gagner)
+                else :
+                    query = "insert into ParticipeEquipe values ({},{},null)".format(
+                    numero_epreuve,numero_inscription)
+                print(query)
+                cursor.execute(query)
         except IntegrityError as err:
             print(err)

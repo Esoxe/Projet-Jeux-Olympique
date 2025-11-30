@@ -1,3 +1,4 @@
+PRAGMA Foreign_keys = on ;
 CREATE TABLE LesSportifs
 (
   numSp NUMBER(4),
@@ -6,7 +7,7 @@ CREATE TABLE LesSportifs
   pays VARCHAR2(20),
   categorieSp VARCHAR2(10),
   dateNaisSp DATE,
-  CONSTRAINT SP_PK PRIMARY KEY (nomSp,prenomSp),
+  CONSTRAINT SP_PK PRIMARY KEY (numSp),
   CONSTRAINT SP_CK1 CHECK(numSp >= 1000 AND numSp <=1500),
   CONSTRAINT SP_CK2 CHECK(categorieSp IN ('feminin','masculin'))
 );
@@ -28,7 +29,7 @@ CREATE TABLE LesEpreuves
 );
 
 CREATE TABLE LesDisciplines
-(
+( 
   nomDi VARCHAR2(25),
   CONSTRAINT DI_PK PRIMARY KEY (nomDi)
 );
@@ -42,12 +43,11 @@ CREATE TABLE LesEquipes
 
 CREATE TABLE SportifAppartientEquipe
 (
-  prenomSp VARCHAR2(20),
-  nomSp VARCHAR2(20), 
+  numSp NUMBER(4), 
   numEq NUMBER(3),  
-  CONSTRAINT SAE_PK PRIMARY KEY (nomSp,prenomSp,numEq),
-  CONSTRAINT FK_SP FOREIGN KEY (nomSp,prenomSp)
-      REFERENCES LesSportifs (nomSp,prenomSp)
+  CONSTRAINT SAE_PK PRIMARY KEY (numSp,numEq),
+  CONSTRAINT FK_SP FOREIGN KEY (numSp)
+      REFERENCES LesSportifs (numSp)
   CONSTRAINT FK_EQ FOREIGN KEY (numEq)
       REFERENCES LesEquipes (numEq)
 );
@@ -67,15 +67,14 @@ CREATE TABLE ParticipeEquipe
 CREATE TABLE ParticipeIndividuel
 (
   numEp NUMBER(3),
-  nomSp VARCHAR2(20),
-  prenomSp VARCHAR2(20),
+  numSp NUMBER(4),
   TypeM VARCHAR2(8)
   CONSTRAINT PI_CK1 CHECK (TypeM IN ('or','argent','bronze')),
-  CONSTRAINT PI_PK PRIMARY KEY (numEp,nomSp,prenomSp),
+  CONSTRAINT PI_PK PRIMARY KEY (numEp,numSp),
   CONSTRAINT FK_EP FOREIGN KEY (numEp)
       REFERENCES LesEpreuves (numEp)
-  CONSTRAINT FK_SP FOREIGN KEY (nomSp,prenomSp)
-      REFERENCES LesSportifs (nomSp,prenomSp)
+  CONSTRAINT FK_SP FOREIGN KEY (numSp)
+      REFERENCES LesSportifs (numSp)
 );
 
 
