@@ -1,3 +1,7 @@
+DROP VIEW IF EXISTS LesAgesSportifs;
+DROP VIEW IF EXISTS LesNbsEquipiers;
+DROP VIEW IF EXISTS AgeORMoyen;
+DROP VIEW IF EXISTS ClassementPays;
 DROP TABLE IF EXISTS SportifAppartientEquipe;
 DROP TABLE IF EXISTS ParticipeEquipe;
 DROP TABLE IF EXISTS ParticipeIndividuel;

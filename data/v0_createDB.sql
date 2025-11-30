@@ -77,4 +77,45 @@ CREATE TABLE ParticipeIndividuel
       REFERENCES LesSportifs (numSp)
 );
 
+/* Créer une vue LesAgesSportifs 
+(numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp, ageSp)*/
+CREATE VIEW LesAgesSportifs AS
+  SELECT numSp, nomSp, prenomSp, pays, categorieSp, dateNaisSp,
+	CAST((julianday('now') - julianday(dateNaisSp)) / 365.25 AS INTEGER) AS ageSp
+	FROM LesSportifs ;
 
+/*Créer une vue LesNbsEquipiers(numEq, nbEquipiersEq)*/
+CREATE VIEW LesNbsEquipiers AS
+  SELECT numEq , COUNT(numSp) AS nbEquipiersEq
+  FROM SportifAppartientEquipe
+  GROUP BY numEq ;
+
+/*Créer une vue calculant l’âge moyen des équipes 
+qui ont gagné une médaille d’or*/
+CREATE VIEW AgeORMoyen AS
+  SELECT numEq, AVG(ageSp) AS AgeMoy
+  FROM SportifAppartientEquipe JOIN LesAgesSportifs USING (numSp)
+     JOIN ParticipeEquipe USING (numEq)
+	GROUP BY numEq
+	HAVING TypeM = 'or' ;
+
+/*Créer une vue donnant le classement des pays 
+selon leur nombre de médailles (pays,
+nbOr, nbArgent, nbBronze)*/
+CREATE VIEW ClassementPays AS
+	SELECT pays, SUM(nbOr) as nbOr, SUM(nbArgent) as nbArgent, SUM(nbBronze) as nbBronze
+	FROM
+		(SELECT numEp, pays, SUM(TypeM='or') as nbOr, SUM(TypeM='argent') as nbArgent, SUM(TypeM='bronze') as nbBronze
+		FROM ParticipeIndividuel JOIN LesSportifs USING (numSp)
+		WHERE TypeM IS NOT NULL
+		GROUP BY pays
+
+		UNION 
+
+		SELECT numEp, pays, SUM(TypeM='or') as nbOr, SUM(TypeM='argent') as nbArgent, SUM(TypeM='bronze') as nbBronze
+		FROM SportifAppartientEquipe JOIN LesAgesSportifs USING (numSp)
+			 JOIN ParticipeEquipe USING (numEq)
+		WHERE TypeM IS NOT NULL
+		GROUP BY numSp ) AS totResultat
+	GROUP BY pays
+	ORDER BY nbOr DESC, nbArgent DESC, nbBronze DESC ;
