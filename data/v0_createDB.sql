@@ -12,12 +12,19 @@ CREATE TABLE LesSportifs
   CONSTRAINT SP_CK2 CHECK(categorieSp IN ('feminin','masculin'))
 );
 
+CREATE TABLE LesDisciplines
+( 
+  nomDi VARCHAR2(25),
+  CONSTRAINT DI_PK PRIMARY KEY (nomDi)
+);
+
+
 CREATE TABLE LesEpreuves
 (
   numEp NUMBER(3),
   nomEp VARCHAR2(20),
   formeEp VARCHAR2(13),
-  nomDi VARCHAR2(25),
+  nomDi VARCHAR2(25) NOT NULL,
   categorieEp VARCHAR2(10),
   nbSportifsEp NUMBER(2),
   dateEp DATE,
@@ -25,13 +32,9 @@ CREATE TABLE LesEpreuves
   CONSTRAINT EP_CK1 CHECK (formeEp IN ('individuelle','par equipe','par couple')),
   CONSTRAINT EP_CK2 CHECK (categorieEp IN ('feminin','masculin','mixte')),
   CONSTRAINT EP_CK3 CHECK (numEp > 0),
-  CONSTRAINT EP_CK4 CHECK (nbSportifsEp > 0)
-);
-
-CREATE TABLE LesDisciplines
-( 
-  nomDi VARCHAR2(25),
-  CONSTRAINT DI_PK PRIMARY KEY (nomDi)
+  CONSTRAINT EP_CK4 CHECK (nbSportifsEp > 0),
+  CONSTRAINT EP_FK1 FOREIGN KEY (nomDi)
+        REFERENCES LesDisciplines(nomDi)
 );
 
 CREATE TABLE LesEquipes
@@ -47,7 +50,7 @@ CREATE TABLE SportifAppartientEquipe
   numEq NUMBER(3),  
   CONSTRAINT SAE_PK PRIMARY KEY (numSp,numEq),
   CONSTRAINT FK_SP FOREIGN KEY (numSp)
-      REFERENCES LesSportifs (numSp)
+      REFERENCES LesSportifs (numSp),
   CONSTRAINT FK_EQ FOREIGN KEY (numEq)
       REFERENCES LesEquipes (numEq)
 );
@@ -56,11 +59,11 @@ CREATE TABLE ParticipeEquipe
 (
   numEp NUMBER(3),
   numEq NUMBER(3),
-  TypeM VARCHAR2(8)
+  TypeM VARCHAR2(8),
   CONSTRAINT PE_CK1 CHECK (TypeM IN ('or','argent','bronze')),
   CONSTRAINT PE_PK PRIMARY KEY (numEp,numEq),
   CONSTRAINT FK_EP FOREIGN KEY (numEp)
-      REFERENCES LesEpreuves (numEp)
+      REFERENCES LesEpreuves (numEp),
   CONSTRAINT FK_EQ FOREIGN KEY (numEq)
       REFERENCES LesEquipes (numEq)
 );
@@ -68,11 +71,11 @@ CREATE TABLE ParticipeIndividuel
 (
   numEp NUMBER(3),
   numSp NUMBER(4),
-  TypeM VARCHAR2(8)
+  TypeM VARCHAR2(8),
   CONSTRAINT PI_CK1 CHECK (TypeM IN ('or','argent','bronze')),
   CONSTRAINT PI_PK PRIMARY KEY (numEp,numSp),
   CONSTRAINT FK_EP FOREIGN KEY (numEp)
-      REFERENCES LesEpreuves (numEp)
+      REFERENCES LesEpreuves (numEp),
   CONSTRAINT FK_SP FOREIGN KEY (numSp)
       REFERENCES LesSportifs (numSp)
 );
@@ -96,26 +99,27 @@ CREATE VIEW AgeORMoyen AS
   SELECT numEq, AVG(ageSp) AS AgeMoy
   FROM SportifAppartientEquipe JOIN LesAgesSportifs USING (numSp)
      JOIN ParticipeEquipe USING (numEq)
-	GROUP BY numEq
-	HAVING TypeM = 'or' ;
+  WHERE TypeM ="or"
+	GROUP BY numEq ;
 
 /*Créer une vue donnant le classement des pays 
 selon leur nombre de médailles (pays,
-nbOr, nbArgent, nbBronze)*/
+nbOr, nbArgent, nbBronze) */
 CREATE VIEW ClassementPays AS
 	SELECT pays, SUM(nbOr) as nbOr, SUM(nbArgent) as nbArgent, SUM(nbBronze) as nbBronze
 	FROM
-		(SELECT numEp, pays, SUM(TypeM='or') as nbOr, SUM(TypeM='argent') as nbArgent, SUM(TypeM='bronze') as nbBronze
+		(SELECT pays, SUM(TypeM='or') as nbOr, SUM(TypeM='argent') as nbArgent, SUM(TypeM='bronze') as nbBronze
 		FROM ParticipeIndividuel JOIN LesSportifs USING (numSp)
 		WHERE TypeM IS NOT NULL
 		GROUP BY pays
 
-		UNION 
+		UNION ALL
 
-		SELECT numEp, pays, SUM(TypeM='or') as nbOr, SUM(TypeM='argent') as nbArgent, SUM(TypeM='bronze') as nbBronze
-		FROM SportifAppartientEquipe JOIN LesAgesSportifs USING (numSp)
-			 JOIN ParticipeEquipe USING (numEq)
+		SELECT pays, SUM(TypeM='or') as nbOr, SUM(TypeM='argent') as nbArgent, SUM(TypeM='bronze') as nbBronze
+		FROM (SELECT DISTINCT numEq,pays 
+          FROM SportifAppartientEquipe JOIN LesSportifs USING (numSp))
+          JOIN ParticipeEquipe USING(numEq)
 		WHERE TypeM IS NOT NULL
-		GROUP BY numSp ) AS totResultat
+		GROUP BY pays)
 	GROUP BY pays
 	ORDER BY nbOr DESC, nbArgent DESC, nbBronze DESC ;

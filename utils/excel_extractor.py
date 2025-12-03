@@ -24,6 +24,18 @@ def read_excel_file(data:sqlite3.Connection, file):
     df_epreuves = pandas.read_excel(file, sheet_name='LesEpreuves', dtype=str)
     df_epreuves = df_epreuves.where(pandas.notnull(df_epreuves), 'null')
 
+    #On construit la requete pour la table LesDisciplines avec LesEpreuves lu precedemment
+    cursor= data.cursor()
+    for ix, row in df_epreuves.iterrows():
+        try:
+            query = "insert into LesDisciplines values ('{}')".format(row['nomDi'])
+            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
+            #print(query)
+            cursor.execute(query)
+        except IntegrityError as err:
+            print(f"{err} : \n{row}")
+
+
     cursor = data.cursor()
     for ix, row in df_epreuves.iterrows():
         try:
@@ -41,17 +53,6 @@ def read_excel_file(data:sqlite3.Connection, file):
             print(f"{err} : \n{row}")
         cursor = data.cursor()
     
-    #On construit la requete pour la table LesDisciplines avec LesEpreuves lu precedemment
-    for ix, row in df_epreuves.iterrows():
-        try:
-            query = "insert into LesDisciplines values ('{}')".format(row['nomDi'])
-            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-            #print(query)
-            cursor.execute(query)
-        except IntegrityError as err:
-            print(f"{err} : \n{row}")
-
-
     # Lecture de l'onglet LesInscriptions du fichier excel, en interprétant toutes les colonnes comme des string
     # pour construire uniformement la requête
     df_inscriptions = pandas.read_excel(file, sheet_name='LesInscriptions', dtype=str)
@@ -77,7 +78,7 @@ def read_excel_file(data:sqlite3.Connection, file):
                 query = "insert into SportifAppartientEquipe values ({},{})".format(
                     row['numSp'], row['numEq'])
                 # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-                print(query)
+                # print(query)
                 cursor.execute(query)
         except IntegrityError as err:
             print(err)
@@ -113,7 +114,7 @@ def read_excel_file(data:sqlite3.Connection, file):
                 else :
                     query = "insert into ParticipeIndividuel values ({},{},null)".format(
                     numero_epreuve,numero_inscription)
-                print(query)
+                #print(query)
                 cursor.execute(query)
         except IntegrityError as err:
             print(err)
@@ -145,7 +146,7 @@ def read_excel_file(data:sqlite3.Connection, file):
                 else :
                     query = "insert into ParticipeEquipe values ({},{},null)".format(
                     numero_epreuve,numero_inscription)
-                print(query)
+                #print(query)
                 cursor.execute(query)
         except IntegrityError as err:
             print(err)
