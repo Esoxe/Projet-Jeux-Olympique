@@ -7,35 +7,38 @@ def read_excel_file(data:sqlite3.Connection, file):
     # pour construire uniformement la requête
     df_sportifs = pandas.read_excel(file, sheet_name='LesSportifsEQ', dtype=str)
     df_sportifs = df_sportifs.where(pandas.notnull(df_sportifs), 'null')
-
+    #On supprime les doublons de numSp dans le excel car il permettait de donner les equipes mais on recupérera cette information plus tard
+    #Cela évite a notre SQL d'avoir a renvoyer des erreur de UNIQUE constraint même si cela fonctionnerait quand même
+    df_sportifs_num_unique =df_sportifs.drop_duplicates(subset=['numSp'])
     cursor = data.cursor()
-    for ix, row in df_sportifs.iterrows():
+    for ix, row in df_sportifs_num_unique.iterrows():
         try:
             query = "insert into LesSportifs values ({},'{}','{}','{}','{}','{}')".format(
                 row['numSp'], row['nomSp'], row['prenomSp'], row['pays'], row['categorieSp'], row['dateNaisSp'])
-            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-            print(query)
-            cursor.execute(query)
-        except IntegrityError as err:
-            print(err)
-
-    # Lecture de l'onglet LesEpreuves du fichier excel, en interprétant toutes les colonnes comme des string
-    # pour construire uniformement la requête
-    df_epreuves = pandas.read_excel(file, sheet_name='LesEpreuves', dtype=str)
-    df_epreuves = df_epreuves.where(pandas.notnull(df_epreuves), 'null')
-
-    #On construit la requete pour la table LesDisciplines avec LesEpreuves lu precedemment
-    cursor= data.cursor()
-    for ix, row in df_epreuves.iterrows():
-        try:
-            query = "insert into LesDisciplines values ('{}')".format(row['nomDi'])
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
             #print(query)
             cursor.execute(query)
         except IntegrityError as err:
             print(f"{err} : \n{row}")
 
+    # Lecture de l'onglet LesEpreuves du fichier excel, en interprétant toutes les colonnes comme des string
+    # pour construire uniformement la requête
+    df_epreuves = pandas.read_excel(file, sheet_name='LesEpreuves', dtype=str)
+    df_epreuves = df_epreuves.where(pandas.notnull(df_epreuves), 'null')
+    discipline_unique = df_epreuves['nomDi'].unique()
 
+    #On construit la requete pour la table LesDisciplines avec l'onglet LesEpreuves lu precedemment
+    cursor= data.cursor()
+    for discipline in discipline_unique:
+        try:
+            query = "insert into LesDisciplines values ('{}')".format(discipline)
+            # On affiche la requête pour comprendre la construction. A enlever une fois compris.
+            #print(query)
+            cursor.execute(query)
+        except IntegrityError as err:
+            print(f"{err} : \n{discipline}")
+
+    #On construit la requete pour la table LesEpreuves avec l'onglet LesEpreuves lu precedemment
     cursor = data.cursor()
     for ix, row in df_epreuves.iterrows():
         try:
@@ -47,27 +50,26 @@ def read_excel_file(data:sqlite3.Connection, file):
             else:
                 query = query + "null)"
             # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-            print(query)
+            # print(query)
             cursor.execute(query)
         except IntegrityError as err:
             print(f"{err} : \n{row}")
         cursor = data.cursor()
     
-    # Lecture de l'onglet LesInscriptions du fichier excel, en interprétant toutes les colonnes comme des string
-    # pour construire uniformement la requête
-    df_inscriptions = pandas.read_excel(file, sheet_name='LesInscriptions', dtype=str)
-    df_inscriptions = df_inscriptions.where(pandas.notnull(df_inscriptions), 'null')
-
+    #On construit la requete pour la table LesQuipes avec LesSportifs lu precedemment
+    #On itere sur sportifs au lieu d'inscriptions car peut etre un equipe n'est inscrite a aucune épreuve
+    #On garde seulement les numero d'équipe et on supprime les doublons(différents sportif dans même equipe)
+    equipe_unique=df_sportifs['numEq'].unique()
     cursor = data.cursor()
-    for ix, row in df_inscriptions.iterrows():
+    for equipe in equipe_unique :
         try:
-            if int(row['numIn']) <=100 :
-                query = "insert into LesEquipes values ({})".format(row['numIn'])
+            if equipe != 'null' :
+                query = "insert into LesEquipes values ({})".format(equipe)
                 # On affiche la requête pour comprendre la construction. A enlever une fois compris.
-                print(query)
+                # print(query)
                 cursor.execute(query)
         except IntegrityError as err:
-            print(f"{err} : \n{row}")
+            print(f"{err} : \n{equipe}")
 
     #Construction a l'aide des lectures précédante de table SportifAppartientEquipe qui est
     #relation entre Sportif et numEq
@@ -84,10 +86,14 @@ def read_excel_file(data:sqlite3.Connection, file):
             print(err)
     # Lecture de l'onglet LesResultats du fichier excel, en interprétant toutes les colonnes comme des string
     # pour construire uniformement la requête
-    #Requete permettant de construire participe indivuel qui comprend les numSp les epreuves ou ils sont inscrit 
-    # et si ils ont obtenu une médaille dans cette épreuve
     df_resultats = pandas.read_excel(file, sheet_name='LesResultats', dtype=str)
     df_resultats = df_resultats.where(pandas.notnull(df_resultats), 'null')     
+    # Lecture de l'onglet LesInscriptions du fichier excel, en interprétant toutes les colonnes comme des string
+    # pour construire uniformement la requête
+    df_inscriptions = pandas.read_excel(file, sheet_name='LesInscriptions', dtype=str)
+    df_inscriptions = df_inscriptions.where(pandas.notnull(df_inscriptions), 'null')
+    #Requete permettant de construire participe indivuel qui comprend les numSp les epreuves ou ils sont inscrit 
+    # et si ils ont obtenu une médaille dans cette épreuve
     dico_medailles=df_resultats.set_index('numEp').to_dict('index')
     cursor = data.cursor()
     medaille_gagner = ''

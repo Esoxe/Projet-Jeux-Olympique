@@ -16,7 +16,7 @@ def liste_epreuves(data, discipline):
     else:
         for epreuve in result:
             print(epreuve[0] + " - " + epreuve[1])
-
+# Fonction permettant d'afficher la vue LesAgesSportifs
 def liste_sportifs(data):
     print("\nListe des sportifs avec leurs ages : ")
     print("\nNuméro Nom Prénom Pays Genre Date de Naissance Age :  \n")
@@ -34,6 +34,7 @@ def liste_sportifs(data):
         for sportifs in result :
             print(sportifs)
 
+# Fonction permettant d'afficher la vue LesNbsEquipiers
 def liste_nb_sportifs_par_equipe(data):
     print("\nListe des equipes avec le nombre de sportifs par équipe : ")
     print("\nNumEq nbSportifs :  \n")
@@ -51,6 +52,7 @@ def liste_nb_sportifs_par_equipe(data):
         for equipe in result :
             print(equipe)
 
+# Fonction permettant d'afficher la vue AgeOrMoyen
 def Age_moyen_or_equipe(data):
     print("\n Age moyen des joueurs dans les equipes ayant obtenu une médaille d'or: ")
     print("\nNumEq Age Moyen :  \n")
@@ -68,6 +70,7 @@ def Age_moyen_or_equipe(data):
         for equipe in result :
             print(equipe)
 
+# Fonction permettant d'afficher la vue ClassementPays
 def Tableau_medailles(data):
     print("\n Tableau des medailles: ")
     print("\nPays OR ARGENT BRONZE :  \n")
@@ -85,7 +88,7 @@ def Tableau_medailles(data):
         for pays in result :
             print(pays)
 
-
+# Fonction permettant d'ajouter un sportif a une équipe permet donc de tester certains trigger
 def insere_sportif_equipe(data):
     num_sp=input("Numero du sportif : ")
     num_eq=input("Numero de l'equipe : ")
@@ -100,6 +103,7 @@ def insere_sportif_equipe(data):
         print("le sportif " + num_sp + " a été insere dans " + num_eq)
         data.commit()
 
+# Fonction permettant d'inscrire un sportif a une épreuve permet donc de tester certains trigger
 def inscrit_sportif_epreuve(data):
     num_sp=input("Numero du sportif : ")
     num_ep=input("Numero de l'epreuve : ")
@@ -113,7 +117,9 @@ def inscrit_sportif_epreuve(data):
     else:
         print("le sportif " + num_sp + " a été inscrit dans l'epreuve " + num_ep)
         data.commit()
+    
 
+# Fonction permettant d'inscrire une équipe a une épreuve permet donc de tester certains trigger
 def inscrit_equipe_epreuve(data):
     num_eq=input("Numero de l'equipe : ")
     num_ep=input("Numero de l'epreuve : ")
